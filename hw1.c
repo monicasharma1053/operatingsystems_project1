@@ -142,3 +142,25 @@ struct node *findNode(struct node *node, int pid)
     //otherwise node is not in the tree 
     return currentNode;
 }
+
+//read the line in question 
+int customLine(char *line, FILE *ps_pipe, int size)
+{
+    int placeholder;
+    char value;
+    //set space in memory for line of characters 
+    memset(line, 0, size);
+
+    for (placeholder = 0; placeholder < size-1; placeholder++)
+    {
+        //read and return line 
+        if (1 != fread(&value, 1, 1, ps_pipe))
+        {
+            if (strlen(line)) return strlen(line);
+            return -1;
+        }
+        //set line to current value 
+        line[placeholder] = value;
+        if ('\n' == value) return strlen(line);
+    }
+}
