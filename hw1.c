@@ -164,3 +164,77 @@ int customLine(char *line, FILE *ps_pipe, int size)
         if ('\n' == value) return strlen(line);
     }
 }
+
+
+int main (int argc, char **argv)
+{
+    struct node psTree; 
+    FILE *ps_pipe = 0;
+    char line[256];
+    
+    int status, lineNumber = 0;
+    int pidIndex, ppidIndex = -1;
+    
+    char *token;
+
+    memset((void*)&psTree, 0, sizeof(psTree));  
+
+    //open and read the file 
+    ps_pipe =(FILE*) popen(psCommand, "r");
+
+    while (1)
+    {
+        status = customLine(line, ps_pipe, sizeof(line));
+        if (status <=0) break;
+
+        long int pid = -10;
+        int ppid = -10;
+        int tokenNumber = 0;
+
+        token = strtok(line, " \t\n");
+
+        while (NULL != token)
+        {
+            pidIndex = 0;
+            ppidIndex = 1;
+
+                if (tokenNumber == pidIndex)
+                {
+                    if (NULL != strchr(token, '(')) 
+                    {
+                        char *firstChar, *lastChar = 0;
+                        firstChar = strchr(token,'(')+1;
+                        lastChar = strchr(token,')');
+                        pid = strtol(firstChar, (char**) lastChar, 10);
+                    }
+                    else
+                    {
+                        pid = atoi(token);
+                    }
+                }
+                else if (tokenNumber == ppidIndex)
+                {
+                    ppid = atoi(token);
+                }
+            
+            //grow the tree when pid and ppid are full 
+            if ((pid >= -5) && (ppid >= -5))
+            {
+                growTree(&psTree, pid, ppid);
+                break;
+            }
+
+            token = strtok(NULL, " \t\n");
+            tokenNumber++;
+        }
+
+        //move to the next line 
+        lineNumber++;
+    }
+    //print the tree
+    printTree(&psTree, 0);
+
+    //close the pipe 
+    pclose(ps_pipe);
+}
+
