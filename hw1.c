@@ -52,3 +52,93 @@ void printTree(struct node *node, int indentSize)
     if (node->sibling) printTree(node->sibling, indentSize);
 }
 
+//grow the tree with current or created nodes 
+int growTree(struct node *node, int pid, int ppid)
+{
+    struct node *currentNode;
+    struct node *startNode;
+
+    currentNode = findNode(node,ppid);
+
+    //search for currentNode 
+    if (currentNode)
+    {
+        //initialize starting node to current found node
+        startNode = currentNode;
+
+        //go through possible children for current node 
+        if (currentNode->child)
+        {
+            //set to child 
+            currentNode = currentNode->child;
+            
+            //go through siblings for child node 
+            while(currentNode->sibling) currentNode = currentNode->sibling;
+        
+            //allocate enough bytes for the node 
+            currentNode->sibling = (struct node* )malloc(sizeof(struct node));
+            if (NULL == currentNode->sibling) return -1;
+           
+                currentNode->sibling->start = startNode;
+                currentNode->sibling->child = NULL;
+                currentNode->sibling->sibling = NULL;
+                currentNode->sibling->pid = pid;
+        }
+
+        //otherwise create a child for the current node 
+        else
+        {
+            //allocate enough free bytes for the new node 
+            currentNode->child = (struct node* )malloc(sizeof(struct node));
+            currentNode->child->start = startNode;
+            currentNode->child->child = NULL;
+            currentNode->child->sibling = NULL;
+            currentNode->child->pid = pid;
+        }
+
+    }
+    //if current node isn't found set it to a new one from PPID 
+    else 
+    {
+        currentNode = node;
+        currentNode->pid = ppid; 
+        //set start, child, and sibling to null for new node 
+        currentNode->start = NULL;
+        currentNode->child = NULL;
+        currentNode->sibling = NULL;
+    }
+}
+
+//retrieve a node 
+struct node *findNode(struct node *node, int pid)
+{
+    //set current node to node in question 
+    struct node *currentNode = node;
+
+    //node null check 
+    if (NULL == currentNode) 
+    {
+        return (struct node*)0;
+    }
+
+    //search for current node by PID
+    while (currentNode)
+    {
+        if (currentNode->pid == pid) 
+        {
+            //return found match 
+            return currentNode;
+        }
+
+        //check siblings 
+        {
+        struct node *sibling_placeholder = findNode(currentNode->sibling, pid);
+        if (sibling_placeholder) 
+            return sibling_placeholder;//return sibling 
+        }
+        //move back to the child and search again for more node matches 
+        currentNode = currentNode->child;
+    }
+    //otherwise node is not in the tree 
+    return currentNode;
+}
